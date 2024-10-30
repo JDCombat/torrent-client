@@ -6,6 +6,6 @@ A proof of concept torrent client fo a school project
 **[Bittorrent protocol]()**
 
 # TODO
-- [] Decode a bencoded .torrent file
-- [] Get list of peers
-- [] Establish a connection
+- [ ] Decode a bencoded .torrent file
+- [ ] Get list of peers
+- [ ] Establish a connection
