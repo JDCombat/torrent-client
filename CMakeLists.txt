@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 include_directories(.)
 
-add_executable(torrent-client 
-    bencode.hpp
-    main.cpp)
+add_executable(torrent-client
+        main.cpp
+        bencode.h
+)

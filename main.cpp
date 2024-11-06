@@ -1,6 +1,8 @@
 #include <fstream>
-#include "bencode.hpp"
 #include <bits.h>
+#include <iostream>
+#include "bencode.h"
+
 
 int main() {
     std::ifstream in;
@@ -15,6 +17,5 @@ int main() {
     text.append("e");
     in.close();
     std::cout << text << std::endl;
-    auto data = bencode::decode(text);
-    auto elem = data["info"];
+    bencode::decode(text);
 }
