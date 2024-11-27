@@ -12,10 +12,13 @@ int main() {
     std::string text;
     while (std::getline(in, line)) {
         text += line;
-        text.erase(text.length() - 1);
+        // text.erase(text.length() - 1);
     }
-    text.append("e");
+    // text.append("e");
     in.close();
     std::cout << text << std::endl;
-    bencode::decode(text);
+    std::cout << text.find(':') << std::endl;
+    for (const auto &[k, v] : bencode::decode(text)) {
+        std::cout << "m[" << k << "] = (" << std::any_cast<std::string>(v) << ") " << std::endl;
+    }
 }
