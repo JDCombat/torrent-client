@@ -7,20 +7,20 @@
 #include <string>
 #include <variant>
 
-// struct types {
-//     int int_type;
-//     std::string string_type;
-//     std::map<std::string, types> map_type;
-//     std::array<std::string> array_type;
-// };
 
 namespace bencode {
-    std::map<std::string, std::any> decode(std::string s) {
-        std::map<std::string, std::any> m;
-        std::string mode = "dic";
-        for (int i = 1; i < 40; i++) {
-            m[s.substr(i + 2, s[i])] = std::any(s.find(s[i]));
+    std::map<std::string, std::string> decode(std::string s) {
+        std::map<std::string, std::string> m;
+        int pos = 0;
+        if (s[pos] != 'd') {
+            throw std::invalid_argument("Error in file (expected 'd' on index 0)");
         }
+        pos+=2;
+        while (s[pos] != 'e') {
+
+            std::string unparsed = s.substr(pos, 2);
+        }
+
 
         return m;
 
