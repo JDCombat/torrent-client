@@ -31,12 +31,39 @@ namespace bencode {
         *pos = e_pos+1;
         return str;
     }
-    std::string decode_dictionary(std::string s, int* pos) {
-
-    }
     std::string decode_array(std::string s, int* pos) {
-
+        *pos++;
+        std::string str = "[";
+        while (s[*pos] != 'e') {
+            str+=decode_string(s, pos) + ",";
+        }
+        str = str.substr(0, str.length()-2)+"]";
+        *pos += 1;
+        return str;
     }
+
+    std::string decode_dictionary(std::string s, int* pos) {
+        while (s[*pos] != 'e') {
+            std::string key = decode_string(s, pos);
+            std::string value;
+            std::cout << "klucz " << key << std::endl;
+            if (std::__format::__is_digit(s[*pos])) {
+                value = decode_string(s, pos);
+            }
+            else if (s[*pos] == 'i') {
+                value = decode_int(s, pos);
+            }
+            else if (s[*pos] == 'l') {
+                value = decode_array(s, pos);
+            }
+            else if (s[*pos] == 'd') {
+                value = decode_dictionary(s, pos);
+            }
+            std::cout << key << ": " << value << std::endl;
+
+        }
+    }
+
     std::map<std::string, std::string> decode_file(std::string s) {
         std::map<std::string, std::string> m;
         if (s[0] != 'd') {
@@ -46,25 +73,8 @@ namespace bencode {
             throw std::invalid_argument("Error in file (expected 'e' on last index)");
         }
         int pos = 1;
-        while (s[pos] != 'e') {
-            std::string key = decode_string(s, &pos);
-            std::string value;
-            std::cout << "klucz " << key << std::endl;
-            if (std::__format::__is_digit(s[pos])) {
-                value = decode_string(s, &pos);
-            }
-            else if (s[pos] == 'i') {
-                value = decode_int(s, &pos);
-            }
-            else if (s[pos] == 'l') {
-                value = decode_dictionary(s, &pos);
-            }
-            else if (s[pos] == 'd') {
-                value = decode_dictionary(s, &pos);
-            }
-            std::cout << key << ": " << value << std::endl;
-            m[key] = value;
-        }
+        std::cout << s.substr(pos, s.size()-pos) << std::endl;
+
 
 
         return m;

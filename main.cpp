@@ -2,6 +2,7 @@
 #include <bits.h>
 #include <iostream>
 #include "bencode.h"
+#include "include/HTTPRequest.hpp"
 
 
 int main() {
