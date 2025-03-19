@@ -6,12 +6,11 @@
 #include <iostream>
 #include <map>
 #include <string>
-#include <include/HTTPRequest.hpp>
 #include <vector>
 
 
 namespace bencode {
-    inline std::string decode_string(std::string s, int* pos) {
+    inline std::string decode_string(std::string s, uint32_t* pos) {
         std::string str_length_str = s.substr(*pos, s.find(':', *pos+1) - *pos);
         *pos += str_length_str.length()+1;
         std::string str = s.substr(*pos, stoi(str_length_str));
@@ -19,7 +18,7 @@ namespace bencode {
         return str;
     }
 
-    std::string decode_int(std::string s, int* pos) {
+    std::string decode_int(std::string s, uint32_t* pos) {
         uint8_t e_pos = s.find('e',*pos+1);
         std::string str = s.substr(*pos+1, e_pos-*pos-1);
         if (str == "-0") {
@@ -31,22 +30,23 @@ namespace bencode {
         *pos = e_pos+1;
         return str;
     }
-    std::string decode_array(std::string s, int* pos) {
-        *pos++;
+    std::string decode_array(std::string s, uint32_t* pos) {
+        (*pos)++;
         std::string str = "[";
         while (s[*pos] != 'e') {
             str+=decode_string(s, pos) + ",";
         }
         str = str.substr(0, str.length()-2)+"]";
-        *pos += 1;
         return str;
     }
 
-    std::string decode_dictionary(std::string s, int* pos) {
+    std::string decode_dictionary(std::string s, uint32_t* pos) {
+        std::string str = "{";
         while (s[*pos] != 'e') {
             std::string key = decode_string(s, pos);
             std::string value;
             std::cout << "klucz " << key << std::endl;
+            std::cout << *pos << std::endl;
             if (std::__format::__is_digit(s[*pos])) {
                 value = decode_string(s, pos);
             }
@@ -57,11 +57,17 @@ namespace bencode {
                 value = decode_array(s, pos);
             }
             else if (s[*pos] == 'd') {
+                ++(*pos);
                 value = decode_dictionary(s, pos);
             }
-            std::cout << key << ": " << value << std::endl;
+            // std::cout << key << ": " << value << std::endl;
 
+            str += key + ':' + value + ',';
         }
+        str += '}';
+        *pos += 1;
+
+        return str;
     }
 
     std::map<std::string, std::string> decode_file(std::string s) {
@@ -72,10 +78,12 @@ namespace bencode {
         if (s[s.size()-1] != 'e') {
             throw std::invalid_argument("Error in file (expected 'e' on last index)");
         }
-        int pos = 1;
-        std::cout << s.substr(pos, s.size()-pos) << std::endl;
+        uint32_t pos = 1;
 
 
+        std::string decoded = decode_dictionary(s, &pos);
+
+        std::cout << decoded << std::endl;
 
         return m;
 
