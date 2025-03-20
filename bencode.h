@@ -10,6 +10,12 @@
 
 
 namespace bencode {
+
+    std::string decode_string(std::string s, uint32_t* pos);
+    std::string decode_int(std::string s, uint32_t* pos);
+    std::string decode_array(std::string s, uint32_t* pos);
+    std::string decode_dictionary(std::string s, uint32_t* pos);
+
     inline std::string decode_string(std::string s, uint32_t* pos) {
         std::string str_length_str = s.substr(*pos, s.find(':', *pos+1) - *pos);
         *pos += str_length_str.length()+1;
@@ -19,8 +25,8 @@ namespace bencode {
     }
 
     std::string decode_int(std::string s, uint32_t* pos) {
-        uint8_t e_pos = s.find('e',*pos+1);
-        std::string str = s.substr(*pos+1, e_pos-*pos-1);
+        const uint32_t e_pos = s.find('e',*pos+1);
+        std::string str = s.substr(*pos+1, e_pos-(*pos)-1);
         if (str == "-0") {
             throw std::runtime_error("Error in file (parsing int '-0')");
         }
@@ -31,12 +37,27 @@ namespace bencode {
         return str;
     }
     std::string decode_array(std::string s, uint32_t* pos) {
-        (*pos)++;
         std::string str = "[";
         while (s[*pos] != 'e') {
-            str+=decode_string(s, pos) + ",";
+            switch (s[*pos]) {
+                case 'i':
+                    str += decode_int(s, pos) + ',';
+                    break;
+                case 'l':
+                    *pos += 1;
+                    str += decode_array(s, pos) + ',';
+                    break;
+                case 'd':
+                    ++(*pos);
+                    str += decode_dictionary(s, pos) + ',';
+                    break;
+                default:
+                    str += decode_string(s, pos) + ',';
+                    break;
+            }
         }
-        str = str.substr(0, str.length()-2)+"]";
+        str = str.substr(0, str.length()-1)+"]";
+        *pos +=1;
         return str;
     }
 
@@ -47,26 +68,28 @@ namespace bencode {
             std::string value;
             std::cout << "klucz " << key << std::endl;
             std::cout << *pos << std::endl;
-            if (std::__format::__is_digit(s[*pos])) {
-                value = decode_string(s, pos);
-            }
-            else if (s[*pos] == 'i') {
-                value = decode_int(s, pos);
-            }
-            else if (s[*pos] == 'l') {
-                value = decode_array(s, pos);
-            }
-            else if (s[*pos] == 'd') {
-                ++(*pos);
-                value = decode_dictionary(s, pos);
+            switch (s[*pos]) {
+                case 'i':
+                    value = decode_int(s, pos);
+                    break;
+                case 'd':
+                    ++(*pos);
+                    value = decode_dictionary(s, pos);
+                    break;
+                case 'l':
+                    *pos += 1;
+                    value = decode_array(s, pos);
+                    break;
+                default:
+                    value = decode_string(s, pos);
+                    break;
             }
             // std::cout << key << ": " << value << std::endl;
 
-            str += key + ':' + value + ',';
+            str += key + ':' + value + ",\n";
         }
-        str += '}';
         *pos += 1;
-
+        str = str.substr(0, str.length()-2)+"}";
         return str;
     }
 
@@ -83,6 +106,7 @@ namespace bencode {
 
         std::string decoded = decode_dictionary(s, &pos);
 
+        std::cout << std::endl << std::endl << std::endl;
         std::cout << decoded << std::endl;
 
         return m;

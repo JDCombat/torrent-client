@@ -17,8 +17,6 @@ int main() {
 
     in.close();
 
-    std::cout << "textdsfdfs: " << text[44999] << std::endl;
-
     auto decoded = bencode::decode_file(text);
 
     // cpr::Response r = cpr::Get(cpr::Url{"https://api.github.com/repos/whoshuu/cpr/contributors"},
