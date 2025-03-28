@@ -2,21 +2,24 @@
 #define BENCODE_H
 
 #include <any>
+#include <cstring>
 #include <format>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
 
 namespace bencode {
 
-    std::string decode_string(std::string s, uint32_t* pos);
-    std::string decode_int(std::string s, uint32_t* pos);
-    std::string decode_array(std::string s, uint32_t* pos);
-    std::string decode_dictionary(std::string s, uint32_t* pos);
+    std::string decode_string(const std::string &s, uint32_t* pos);
+    std::string decode_int(const std::string& s, uint32_t* pos);
+    std::string decode_array(const std::string &s, uint32_t* pos);
+    std::string decode_dictionary(const std::string &s, uint32_t* pos);
+    std::string to_hex(const std::string &s);
 
-    inline std::string decode_string(std::string s, uint32_t* pos) {
+    inline std::string decode_string(const std::string &s, uint32_t* pos) {
         std::string str_length_str = s.substr(*pos, s.find(':', *pos+1) - *pos);
         *pos += str_length_str.length()+1;
         std::string str = s.substr(*pos, stoi(str_length_str));
@@ -24,7 +27,7 @@ namespace bencode {
         return str;
     }
 
-    std::string decode_int(std::string s, uint32_t* pos) {
+    std::string decode_int(const std::string& s, uint32_t* pos) {
         const uint32_t e_pos = s.find('e',*pos+1);
         std::string str = s.substr(*pos+1, e_pos-(*pos)-1);
         if (str == "-0") {
@@ -36,7 +39,7 @@ namespace bencode {
         *pos = e_pos+1;
         return str;
     }
-    std::string decode_array(std::string s, uint32_t* pos) {
+    std::string decode_array(const std::string &s, uint32_t* pos) {
         std::string str = "[";
         while (s[*pos] != 'e') {
             switch (s[*pos]) {
@@ -61,7 +64,8 @@ namespace bencode {
         return str;
     }
 
-    std::string decode_dictionary(std::string s, uint32_t* pos) {
+    std::string decode_dictionary(const std::string &s, uint32_t* pos) {
+        std::map<std::string, std::variant<std::string, std::map<std::string, std::string>>> dict;
         std::string str = "{";
         while (s[*pos] != 'e') {
             std::string key = decode_string(s, pos);
@@ -82,18 +86,22 @@ namespace bencode {
                     break;
                 default:
                     value = decode_string(s, pos);
+                    if (key == "pieces")
+                    {
+                        value = to_hex(value);
+                    }
                     break;
             }
             // std::cout << key << ": " << value << std::endl;
 
-            str += key + ':' + value + ",\n";
+            str += key + ':' + value + ",";
         }
         *pos += 1;
         str = str.substr(0, str.length()-2)+"}";
         return str;
     }
 
-    std::map<std::string, std::string> decode_file(std::string s) {
+    std::map<std::string, std::string> decode_file(const std::string &s) {
         std::map<std::string, std::string> m;
         if (s[0] != 'd') {
             throw std::invalid_argument("Error in file (expected 'd' on index 0)");
@@ -111,6 +119,16 @@ namespace bencode {
 
         return m;
 
+    }
+
+    std::string to_hex(const std::string &s)
+    {
+        std::stringstream ss;
+        for (int i = 0; i < std::strlen((s.data())); i++)
+        {
+            ss << std::hex << (int)s[i];
+        }
+        return ss.str();
     }
 
 
