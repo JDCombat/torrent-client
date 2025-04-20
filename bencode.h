@@ -4,6 +4,7 @@
 #include <any>
 #include <cstring>
 #include <format>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -17,7 +18,7 @@ namespace bencode {
     std::string decode_int(const std::string& s, uint32_t* pos);
     std::string decode_array(const std::string &s, uint32_t* pos);
     std::string decode_dictionary(const std::string &s, uint32_t* pos);
-    std::string to_hex(const std::string &s);
+    std::string to_hex(std::string &s);
 
     inline std::string decode_string(const std::string &s, uint32_t* pos) {
         std::string str_length_str = s.substr(*pos, s.find(':', *pos+1) - *pos);
@@ -121,13 +122,15 @@ namespace bencode {
 
     }
 
-    std::string to_hex(const std::string &s)
+    std::string to_hex(std::string &s)
     {
         std::stringstream ss;
-        for (int i = 0; i < std::strlen((s.data())); i++)
-        {
-            ss << std::hex << (int)s[i];
+        auto ptr = reinterpret_cast<uint8_t*>(s.data());
+        ss << std::hex << std::setfill('0');
+        for (const auto &c : ptr) {
+            ss << static_cast<int>(c);
         }
+        // std::cout  << std::hex << static_cast<int>(ptr[2]) << "\n";
         return ss.str();
     }
 
