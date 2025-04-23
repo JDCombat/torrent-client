@@ -5,7 +5,7 @@
 
 int main() {
     std::ifstream in;
-    in.open("../sample.torrent", std::fstream::binary);
+    in.open("../sample2.torrent", std::fstream::binary);
     std::string line;
     
     std::string text;

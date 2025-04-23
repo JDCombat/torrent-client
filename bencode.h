@@ -2,6 +2,7 @@
 #define BENCODE_H
 
 #include <any>
+#include <cstdint>
 #include <cstring>
 #include <format>
 #include <iomanip>
@@ -60,7 +61,8 @@ namespace bencode {
                     break;
             }
         }
-        str = str.substr(0, str.length()-1)+"]";
+        str = str.substr(0, str.length()-1);
+        str += "]";
         *pos +=1;
         return str;
     }
@@ -127,10 +129,9 @@ namespace bencode {
         std::stringstream ss;
         auto ptr = reinterpret_cast<uint8_t*>(s.data());
         ss << std::hex << std::setfill('0');
-        for (const auto &c : ptr) {
-            ss << static_cast<int>(c);
+        for (size_t i = 0; i < s.size(); i++) {
+            ss << std::setw(2) << static_cast<int>(ptr[i]);
         }
-        // std::cout  << std::hex << static_cast<int>(ptr[2]) << "\n";
         return ss.str();
     }
 
