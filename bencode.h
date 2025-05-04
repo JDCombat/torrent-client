@@ -57,7 +57,7 @@ namespace bencode {
                     str += decode_dictionary(s, pos) + ',';
                     break;
                 default:
-                    str += decode_string(s, pos) + ',';
+                    str += '"' + decode_string(s, pos) + '"' + ',';
                     break;
             }
         }
@@ -88,10 +88,10 @@ namespace bencode {
                     value = decode_array(s, pos);
                     break;
                 default:
-                    value = decode_string(s, pos);
+                    value = '"' + decode_string(s, pos) + '"';
                     if (key == "pieces")
                     {
-                        value = to_hex(value);
+                        value = '"' + to_hex(value) + '"';
                     }
                     break;
             }
@@ -100,7 +100,7 @@ namespace bencode {
             str += key + ':' + value + ",";
         }
         *pos += 1;
-        str = str.substr(0, str.length()-2)+"}";
+        str = str.substr(0, str.length()-1)+"}";
         return str;
     }
 

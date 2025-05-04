@@ -3,9 +3,9 @@
 #include "bencode.h"
 #include "cpr/cpr.h"
 
-int main() {
+int main(int argc, char **argv) {
     std::ifstream in;
-    in.open("../sample2.torrent", std::fstream::binary);
+    in.open("../sample4.torrent", std::fstream::binary);
     std::string line;
     
     std::string text;
