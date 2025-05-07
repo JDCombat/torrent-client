@@ -10,6 +10,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <variant>
 #include <vector>
 
 
@@ -18,7 +19,7 @@ namespace bencode {
     std::string decode_string(const std::string &s, uint32_t* pos);
     std::string decode_int(const std::string& s, uint32_t* pos);
     std::string decode_array(const std::string &s, uint32_t* pos);
-    std::string decode_dictionary(const std::string &s, uint32_t* pos);
+    std::string decode_dictionary(const std::string &s, uint32_t* pos, bool isHex = false);
     std::string to_hex(std::string &s);
 
     inline std::string decode_string(const std::string &s, uint32_t* pos) {
@@ -67,11 +68,17 @@ namespace bencode {
         return str;
     }
 
-    std::string decode_dictionary(const std::string &s, uint32_t* pos) {
+    std::string decode_dictionary(const std::string &s, uint32_t* pos, bool isHex) {
         std::map<std::string, std::variant<std::string, std::map<std::string, std::string>>> dict;
         std::string str = "{";
         while (s[*pos] != 'e') {
             std::string key = decode_string(s, pos);
+            if (isHex) {
+                key = to_hex(key);
+            }
+            if (key.empty()) {
+                key = "\"\"";
+            }
             std::string value;
             std::cout << "klucz " << key << std::endl;
             std::cout << *pos << std::endl;
@@ -81,6 +88,10 @@ namespace bencode {
                     break;
                 case 'd':
                     ++(*pos);
+                    if (key == "piece layers") {
+                        value = decode_dictionary(s, pos, true);
+                        break;
+                    }
                     value = decode_dictionary(s, pos);
                     break;
                 case 'l':
@@ -88,10 +99,12 @@ namespace bencode {
                     value = decode_array(s, pos);
                     break;
                 default:
-                    value = '"' + decode_string(s, pos) + '"';
-                    if (key == "pieces")
-                    {
-                        value = '"' + to_hex(value) + '"';
+                    std::string tmpstr = decode_string(s, pos);
+                    if (key == "pieces" || key == "pieces root" || isHex) {
+                        value = '"' + to_hex(tmpstr) + '"';
+                    }
+                    else {
+                        value = '"' + tmpstr + '"';
                     }
                     break;
             }
