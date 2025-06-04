@@ -12,6 +12,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include "nlohmann/json.hpp"
 
 
 namespace bencode {
@@ -63,6 +64,9 @@ namespace bencode {
             }
         }
         str = str.substr(0, str.length()-1);
+        if (str.empty()) {
+            str = "[";
+        }
         str += "]";
         *pos +=1;
         return str;
@@ -80,8 +84,10 @@ namespace bencode {
                 key = "\"\"";
             }
             std::string value;
-            std::cout << "klucz " << key << std::endl;
-            std::cout << *pos << std::endl;
+
+            // std::cout << "klucz " << key << std::endl;
+            // std::cout << *pos << std::endl;
+
             switch (s[*pos]) {
                 case 'i':
                     value = decode_int(s, pos);
@@ -108,17 +114,14 @@ namespace bencode {
                     }
                     break;
             }
-            // std::cout << key << ": " << value << std::endl;
-
-            str += key + ':' + value + ",";
+            str += '"' + key + '"' + ':' + value + ",";
         }
         *pos += 1;
         str = str.substr(0, str.length()-1)+"}";
         return str;
     }
 
-    std::map<std::string, std::string> decode_file(const std::string &s) {
-        std::map<std::string, std::string> m;
+    nlohmann::json decode_file(const std::string &s) {
         if (s[0] != 'd') {
             throw std::invalid_argument("Error in file (expected 'd' on index 0)");
         }
@@ -130,10 +133,9 @@ namespace bencode {
 
         std::string decoded = decode_dictionary(s, &pos);
 
-        std::cout << std::endl << std::endl << std::endl;
-        std::cout << decoded << std::endl;
+        // std::cout << decoded << std::endl;
 
-        return m;
+        return nlohmann::json::parse(decoded);
 
     }
 
