@@ -22,6 +22,11 @@ namespace bencode {
     std::string decode_array(const std::string &s, uint32_t* pos);
     std::string decode_dictionary(const std::string &s, uint32_t* pos, bool isHex = false);
     std::string to_hex(std::string &s);
+    std::string encode_dictionary(const nlohmann::json &j);
+    std::string encode_array(const nlohmann::json &j);
+    std::string encode_string(const nlohmann::json &j);
+    std::string encode_int(const nlohmann::json &j);
+    std::string encode_hex_string(const nlohmann::json &j);
 
     inline std::string decode_string(const std::string &s, uint32_t* pos) {
         std::string str_length_str = s.substr(*pos, s.find(':', *pos+1) - *pos);
@@ -73,7 +78,6 @@ namespace bencode {
     }
 
     std::string decode_dictionary(const std::string &s, uint32_t* pos, bool isHex) {
-        std::map<std::string, std::variant<std::string, std::map<std::string, std::string>>> dict;
         std::string str = "{";
         while (s[*pos] != 'e') {
             std::string key = decode_string(s, pos);
@@ -106,7 +110,7 @@ namespace bencode {
                     break;
                 default:
                     std::string tmpstr = decode_string(s, pos);
-                    if (key == "pieces" || key == "pieces root" || isHex) {
+                    if (key == "pieces" || key == "pieces root" || isHex || key == "peers") {
                         value = '"' + to_hex(tmpstr) + '"';
                     }
                     else {
@@ -147,6 +151,78 @@ namespace bencode {
         for (size_t i = 0; i < s.size(); i++) {
             ss << std::setw(2) << static_cast<int>(ptr[i]);
         }
+        return ss.str();
+    }
+
+    std::string encode_dictionary(const nlohmann::json &j) {
+        std::stringstream ss;
+        ss << 'd';
+        for (auto& [key, value] : j.items()) {
+            ss << key.length() << ':' << key;
+            if (value.is_array()) {
+                ss << encode_array(value);
+            }
+            else if (value.is_number()) {
+                ss << encode_int(value);
+            }
+            else if (value.is_object()) {
+                ss << encode_dictionary(value);
+            }
+            else if (value.is_string()) {
+                if (key == "pieces" || key == "pieces root" || key == "peers") {
+                    ss << encode_hex_string(value);
+                }
+                else {
+                    ss << encode_string(value);
+                }
+            }
+        }
+        ss << 'e';
+        return ss.str();
+    }
+
+    std::string encode_array(const nlohmann::json &j) {
+        std::stringstream ss;
+        ss << 'l';
+        for (auto& value : j) {
+            if (value.is_array()) {
+                ss << encode_array(value);
+            }
+            else if (value.is_number()) {
+                ss << encode_int(value);
+            }
+            else if (value.is_object()) {
+                ss << encode_dictionary(value);
+            }
+            else {
+                ss << encode_string(value);
+            }
+
+        }
+
+        ss << 'e';
+        return ss.str();
+    }
+
+    std::string encode_string(const nlohmann::json &j) {
+        std::stringstream ss;
+        ss << j.get<std::string>().length() << ':' << j.get<std::string>();
+        return ss.str();
+    }
+    std::string encode_int(const nlohmann::json &j) {
+        std::stringstream ss;
+        ss << 'i' << j.get<int64_t>() << 'e';
+        return ss.str();
+    }
+
+    std::string encode_hex_string(const nlohmann::json &j) {
+        std::stringstream ss;
+        const std::string stringHex = j.get<std::string>();
+        std::string bytesHex;
+        for (int i = 0; i < stringHex.length() - 1; i+=2) {
+            bytesHex += static_cast<char>(std::stoi(stringHex.substr(i, 2), nullptr, 16));
+        }
+        ss << bytesHex.length() << ':' << bytesHex;
         return ss.str();
     }
 
