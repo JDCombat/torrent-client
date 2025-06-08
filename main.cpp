@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "bencode.h"
+#include "clientSocket.h"
 #include "downloader.h"
 #include "cpr/cpr.h"
 #include "openssl/sha.h"
@@ -135,7 +136,15 @@ int main(int argc, char* argv[]) {
 
 
         Downloader downloader("http://tracker.opentrackr.org:1337/announce", bytesHex);
-        downloader.start();
+
+        std::string host = "192.168.1.109";
+
+        auto socket = new clientSocket(host, 100);
+        socket->connectSocket();
+        socket->sendSocket("chuj");
+        delete socket;
+
+        // downloader.start();
     }
     else {
         return 0;

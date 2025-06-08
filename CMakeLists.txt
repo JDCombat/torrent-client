@@ -22,6 +22,8 @@ add_executable(torrent-client
         main.cpp
         bencode.h
         downloader.h
+        clientSocket.h
+        serverSocket.h
 )
 target_link_libraries(torrent-client PRIVATE cpr::cpr)
 target_link_libraries(torrent-client PRIVATE nlohmann_json::nlohmann_json)

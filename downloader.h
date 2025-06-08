@@ -19,7 +19,7 @@ class Downloader {
 
     std::vector<peer> peers;
 
-    bool running = false;
+    std::atomic_bool running = false;
 
     std::string event;
 
@@ -45,14 +45,14 @@ inline void Downloader::start() {
         printf("Portfwd.init() fdsfs failed.\n");
         return;
     }
-    printf("External IP: %s\n", pf.external_ip().c_str());
-    printf("LAN IP: %s\n", pf.lan_ip().c_str());
-    printf("Max upstream: %d bps, max downstream: %d bps\n",
-           pf.max_upstream_bps(), pf.max_downstream_bps() );
+    // printf("External IP: %s\n", pf.external_ip().c_str());
+    // printf("LAN IP: %s\n", pf.lan_ip().c_str());
+    // printf("Max upstream: %d bps, max downstream: %d bps\n",
+    //        pf.max_upstream_bps(), pf.max_downstream_bps() );
 
     printf("%s\n", ((pf.add( 61420 ))?"Added":"Failed to add") );
 
-    event = "stopped";
+    event = "started";
     running = true;
     requestThread = std::thread([this] {requestAnnounce();});
     requestThread.detach();
@@ -61,11 +61,16 @@ inline void Downloader::start() {
     while (running) {
         for (auto& peer : peers) {
             std::cout << peer.host << ":" << peer.port << "\n";
+            auto socket = new clientSocket(peer.host, peer.port);
+            socket->connectSocket();
+            std::string message = "\x13";
+            socket->sendSocket()
+            delete socket;
         }
     }
 }
 inline void Downloader::requestAnnounce() {
-    while (true) {
+    while (running) {
         cpr::Parameters params;
         if (!event.empty()) {
             params = cpr::Parameters{{"compact", "1"}, {"info_hash", hash}, {"peer_id", "MxVpOJmHKKwgCbMhNNl3"}, {"event", event}, {"port", "61420"}, {"numwant", "200"}};
