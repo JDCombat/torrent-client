@@ -31,6 +31,11 @@ A status of what works then:
 ## System requirements
 Works for sure on Linux and POSIX systems. Windows currently doesn't work because of the sockets :(
 
+You need
+```requirements
+openssl cmake
+```
+
 # Usage
 Open a file and start operating on it
 ```terminaloutput

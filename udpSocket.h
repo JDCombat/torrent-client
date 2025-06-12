@@ -72,8 +72,6 @@ inline void udpSocket::sendSocket(utpPacket packet, sockaddr_in addr) {
 
     buffer[1] = 0;
 
-    std::cout << "DEBUG sendSocket (After header set): buffer[0]=" << std::hex << (int)buffer[0]
-          << ", buffer[1]=" << (int)buffer[1] << std::dec << std::endl;
 
     uint16_t net_conn_id = htons(packet.conn_id);
     memcpy(buffer + 2, &net_conn_id, sizeof(net_conn_id));
@@ -93,30 +91,12 @@ inline void udpSocket::sendSocket(utpPacket packet, sockaddr_in addr) {
     uint16_t net_ack_num = htons(packet.ack_num);
     memcpy(buffer + 18, &net_ack_num, sizeof(net_ack_num));
 
-    std::cout << "DEBUG sendSocket (After all header serialization): buffer[0]=" << std::hex << (int)buffer[0]
-          << ", buffer[1]=" << (int)buffer[1] << std::dec << std::endl;
 
     if (packet.data != nullptr && packet.data_len > 0) {
         memcpy(buffer + UTP_HEADER_SIZE, packet.data, packet.data_len);
     }
 
     size_t total_len = UTP_HEADER_SIZE + packet.data_len;
-    std::cout << "total length" << total_len << std::endl;
-
-    // DEBUG POINT 3: Check header bytes IMMEDIATELY BEFORE sendto
-    std::cout << "DEBUG sendSocket (IMMEDIATELY BEFORE sendto): buffer[0]=" << std::hex << (int)buffer[0]
-              << ", buffer[1]=" << (int)buffer[1] << std::dec << std::endl;
-
-    std::cout << "DEBUG sendSocket (Full buffer before sendto):\n";
-    for (size_t i = 0; i < total_len; ++i) {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)buffer[i] << " ";
-        if ((i + 1) % 16 == 0) std::cout << std::endl;
-    }
-    std::cout << std::dec << std::endl;
-
-
-    std::cout << addr.sin_addr.s_addr << std::endl;
-    std::cout << addr.sin_port << std::endl;
 
     ssize_t bytes_sent = sendto(sock, &buffer, total_len, 0, (sockaddr*)&addr, sizeof(addr));
 

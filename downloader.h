@@ -1,5 +1,7 @@
 #ifndef DOWNLOADER_H
 #define DOWNLOADER_H
+#include <chrono>
+#include <random>
 #include <string>
 #include "cpr/cpr.h"
 #include <thread>
@@ -44,16 +46,13 @@ class Downloader {
 inline void Downloader::start() {
 
     Portfwd pf;
-    if(!pf.init(2000))
+    if(pf.init(2000))
     {
-        printf("Portfwd.init() fdsfs failed.\n");
+        printf("%s\n", ((pf.add( 61420 ))?"Added":"Failed to add") );
     }
-    // printf("External IP: %s\n", pf.external_ip().c_str());
-    // printf("LAN IP: %s\n", pf.lan_ip().c_str());
-    // printf("Max upstream: %d bps, max downstream: %d bps\n",
-    //        pf.max_upstream_bps(), pf.max_downstream_bps() );
-
-    // printf("%s\n", ((pf.add( 61420 ))?"Added":"Failed to add") );
+    else {
+        printf("Portfwd.init() failed.\n");
+    }
 
     event = "started";
     running = true;
@@ -81,9 +80,13 @@ void handshakePeer(peer& peer, udpSocket* socket, std::string& hash) {
     utpPacket packet{};
     packet.set_type(ST_SYN);
     packet.set_version(1);
-    packet.conn_id = htons(43);
+
+    static std::mt19937 generator(std::chrono::system_clock::now().time_since_epoch().count());
+    static std::uniform_int_distribution<uint16_t> distribution(0, 0xFFFF);
+    uint16_t initial_conn_id = distribution(generator);
+    packet.conn_id = htons(initial_conn_id);
     packet.ack_num = htons(0);
-    packet.seq_num = htonl(peer.seqNr);
+    packet.seq_num = htons(peer.seqNr);
     timeval t{};
     gettimeofday(&t, nullptr);
     packet.timestamp = htonl(t.tv_usec);
@@ -98,12 +101,12 @@ void handshakePeer(peer& peer, udpSocket* socket, std::string& hash) {
     auto output = socket->recvSocket();
 
 
-    if (output.first.get_type() == ST_STATE && output.first.get_version() == 1) {
+    if (output.first.get_type() == ST_STATE) {
         std::cout << "Peer: " << peer.host << " | SUCCESS: Received ST_STATE. Sending ST_DATA with handshake." << std::endl;
 
         utpPacket data{};
         data.set_version(1);
-        data.set_type(ST_DATA); // Type 0
+        data.set_type(ST_DATA);
 
         data.conn_id = htons(output.first.conn_id);
         data.ack_num = htons(output.first.seq_num);
@@ -115,7 +118,7 @@ void handshakePeer(peer& peer, udpSocket* socket, std::string& hash) {
         data.timestamp = htonl(current_timestamp_micros);
         data.timestamp_diff = htonl(current_timestamp_micros - output.first.timestamp);
 
-        data.window_size = htonl(output.first.window_size); // Echo the window size
+        data.window_size = htonl(output.first.window_size);
 
         char message[68];
         memcpy(message, "\x13", 1);
@@ -126,14 +129,7 @@ void handshakePeer(peer& peer, udpSocket* socket, std::string& hash) {
         data.data = (uint8_t*)message;
         data.data_len = 68;
 
-        std::cout << "DEBUG: message array content before sendSocket:\n";
-        for (int i = 0; i < 68; ++i) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)(unsigned char)message[i] << " ";
-            if ((i + 1) % 16 == 0) std::cout << std::endl;
-        }
 
-        std::cout << "DEBUG: data.type_ver before sendSocket: " << std::hex << (int)data.type_ver << std::dec << std::endl;
-        std::cout << std::dec << std::endl;
 
         socket->sendSocket(data, sendAddr);
 
@@ -180,7 +176,7 @@ inline void Downloader::requestAnnounce() {
                                 cpr::Timeout{100000}
                   );
         // std::cout << r.url << "\n";
-        // std::cout << r.text << "\n";                         // JSON text string2
+        // std::cout << r.text << "\n";
 
         std::string toDecode = r.text;
 
