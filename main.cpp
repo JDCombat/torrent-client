@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "bencode.h"
-#include "clientSocket.h"
+#include "tcpSocket.h"
 #include "downloader.h"
 #include "cpr/cpr.h"
 #include "openssl/sha.h"
@@ -68,10 +68,8 @@ int main(int argc, char* argv[]) {
 
     auto decoded = bencode::decode_file(text);
 
-    // auto test = bencode::decode_dictionary("d8:completei0e10:downloadedi0e10:incompletei0e8:intervali86400e12:min intervali86400e5:peers0:6:peers60:15:warning message45:info hash is not authorized with this trackere", new uint32_t(1));
-    // std::cout << test;
 
-    std::cout << "Comment: " << decoded.at("comment") << "\n";
+    // std::cout << "Comment: " << decoded.at("comment") << "\n";
     std::cout << "Created by: " << decoded.at("created by") << "\n";
     std::time_t time = decoded.at("creation date").get<uint64_t>();
     std::cout << "Creation date: " << std::put_time(std::localtime(&time), "%c %Z") << "\n";
@@ -109,12 +107,7 @@ int main(int argc, char* argv[]) {
     char choice;
     std::cin >> std::noskipws >> choice;
     if (choice == 'y') {
-        std::cout << decoded.at("info") << '\n';
         std::string infoDictionary = bencode::encode_dictionary(decoded.at("info"));
-        std::cout << infoDictionary << "\n";
-
-        auto check = bencode::decode_dictionary(infoDictionary, new uint32_t(1));
-        std::cout << check << "\n";
 
         unsigned char hash[SHA_DIGEST_LENGTH];
 
@@ -132,19 +125,22 @@ int main(int argc, char* argv[]) {
             bytesHex += static_cast<char>(std::stoi(hashString.substr(i, 2), nullptr, 16));
         }
 
-        std::cout << bytesHex << "\n";
 
 
         Downloader downloader("http://tracker.opentrackr.org:1337/announce", bytesHex);
+        downloader.start();
 
-        std::string host = "192.168.1.109";
-
-        auto socket = new clientSocket(host, 100);
-        socket->connectSocket();
-        socket->sendSocket("chuj");
-        delete socket;
-
-        // downloader.start();
+        // auto socket = clientSocket("192.168.33.4", 20311);
+        // bool connected = socket.connectSocket();
+        // std::string message = "\x13";
+        // message += "BitTorrent protocol";
+        // message += "\x00\x00\x00\x00\x00\x00\x00\x00";
+        // message += bytesHex;
+        // message += "jakjanienawidzebozga";
+        // if (connected) {
+        //     socket.sendSocket(message);
+        //     // std::cout << socket.recvSocket(68);
+        // }
     }
     else {
         return 0;
