@@ -36,6 +36,13 @@ You need
 openssl cmake
 ```
 
+# Compiling
+```terminaloutput
+cmake .
+cmake . --build
+./torrent-client <args>
+```
+
 # Usage
 Open a file and start operating on it
 ```terminaloutput
