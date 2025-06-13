@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 
 
 
-        Downloader downloader("http://tracker.opentrackr.org:1337/announce", bytesHex);
+        Downloader downloader(decoded.at("announce"), bytesHex);
         downloader.start();
 
         // auto socket = clientSocket("192.168.33.4", 20311);
